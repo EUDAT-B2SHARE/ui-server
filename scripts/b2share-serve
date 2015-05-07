@@ -1,0 +1,14 @@
+import os, sys
+
+try:
+    """ run global """
+    imp.find_module("b2share_server.b2share_server")
+    from b2share_server.b2share_server import B2shareServer
+except:
+    """ run local """
+    q = os.path.dirname(os.path.abspath(__file__))
+    sys.path.append(os.path.abspath(q + "/../src"))
+    from b2share_server import B2shareServer
+
+if __name__ == '__main__':
+    B2shareServer.serve()
