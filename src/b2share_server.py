@@ -5,8 +5,8 @@ from flask import Response, g, redirect, url_for, make_response
 from werkzeug.routing import Rule
 from functools import wraps
 
-import sha
-
+from model import User, Users
+import json
 
 
 app = Flask(__name__)
@@ -37,49 +37,14 @@ def default_headers(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# routes
-app.url_map.add(Rule('/users.json', endpoint="user#index"))
-app.url_map.add(Rule('/user/login.json', endpoint="user#login"))
-
 
 class Helper(object):
     @classmethod
-    def to_hash(cls, email, password):
-        return sha.new(email + ":" + password).hexdigest()
-
-    @classmethod
-    def make_user(cls, name, email, password):
-        return jsonify({'user': {
-                'email': email, 'name': name,
-                'password': Helper.to_hash(email, password)
-            }})
-
-    @classmethod
-    def login(cls, email, password):
-        return False
-
-    @classmethod
     def abort(cls, code, error_msg):
-        json = jsonify({'error': code, "message": error_msg})
-        return json, code
+        jj = jsonify({'error': code, "message": error_msg})
+        return jj, code
 
-class Factory(object):
-
-    @classmethod
-    def user_dennis(cls):
-        return Helper.make_user(name="Dennis Blommesteijn",
-            email="dennis.blommesteijn@surfsara.nl", password="dennis123")
-
-    @classmethod
-    def user_walter(cls):
-        return Helper.make_user(name="Walter de Jong",
-            email="walter.dejong@surfsara.nl", password="walter123")
-
-    @classmethod
-    def users(cls):
-        users = {'users': [ Factory.user_dennis(), Factory.user_walter() ]}
-
-
+# server payload
 class B2shareServer(object):
     @classmethod
     def serve(cls):
@@ -87,20 +52,28 @@ class B2shareServer(object):
         app.run(debug = True)
 
     @app.endpoint('user#index')
+    @default_headers
     def user_index():
         json = jsonify(Factory.users())
         return json, 200
 
-    @app.endpoint('user#login')
+    @app.endpoint('user#authenticate')
     @default_headers
     def user_login(methods=["POST", "OPTIONS"]):
-        email = request.args.get('email', "")
-        password = request.args.get('password', "")
-        if (email == "" or password == "") or Helper.login(email, password):
-            return Helper.abort(403, "access denied")
-        json = jsonify("login")
-        return json, 200
+        if request.method == "OPTIONS":
+            return jsonify({}), 200
+        try:
+            jdata = json.loads(request.data)
+            user = User.find_user(email=jdata['email'], password=jdata['password'])
+            if user == None:
+                return Helper.abort(401, "Unauthorized")
+            return user.to_json(), 200
+        except KeyError:
+            return Helper.abort(400, "Bad Request")
 
+# routes
+app.url_map.add(Rule('/users.json', endpoint="user#index"))
+app.url_map.add(Rule('/user/authenticate.json', endpoint="user#authenticate"))
 
 
 
