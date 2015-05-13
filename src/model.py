@@ -64,7 +64,7 @@ class Deposit(object):
         self._uuid = str(uuid.uuid4())
         self._title = title
         self._description = description
-        self._created_at = str(time.time())
+        self._created_at = time.time()
 
     def to_dict(self):
         return {'deposit': {
@@ -73,8 +73,8 @@ class Deposit(object):
             'description': self._description,
             'authors': [],
             'domain': "",
-            'created_at': self._created_at,
-            'modified_at': str(time.time()),
+            'created_at': str(int(self._created_at*1000)),
+            'modified_at': str(int(time.time()*1000)),
             'pid': '',
             'files': [],
             'license': ''
@@ -85,6 +85,9 @@ class Deposit(object):
 
     def get_created_at(self):
         return self._created_at
+
+    def get_uuid(self):
+        return self._uuid
 
     @classmethod
     def to_deposits_json(cls, ds):
@@ -97,8 +100,14 @@ class Deposit(object):
         # sort
         reverse = order == 'asc'
         ds = sorted(deposits, key=lambda d: d.get_created_at(), reverse=reverse)
-
         return ds[start:end]
+
+    @classmethod
+    def find_deposit(cls, uuid):
+        for d in deposits:
+            if d.get_uuid() == uuid:
+                return d
+        return None
 
 # user, deposit test values
 users = [ User.user_dennis(), User.user_walter() ]

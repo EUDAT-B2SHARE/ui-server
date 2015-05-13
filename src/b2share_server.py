@@ -6,7 +6,7 @@ from werkzeug.routing import Rule
 from functools import wraps
 
 from model import User, Deposit
-import json
+import json, sys
 
 
 app = Flask(__name__)
@@ -40,7 +40,7 @@ def default_headers(f):
 
 class Helper(object):
     @classmethod
-    def abort(cls, code, error_msg, base, ):
+    def abort(cls, code, error_msg, base):
         jj = jsonify({'error': {"message": error_msg, "base": base }})
         return jj, code
 
@@ -79,27 +79,48 @@ class B2shareServer(object):
     @app.endpoint('deposit#index')
     @default_headers
     def deposit_index(methods=["GET", "OPTIONS"]):
-        # ordering
-        order_by = request.args.get('order_by', 'created_at')
-        order = request.args.get('order', 'desc')
-        # pagination
-        size = int(request.args.get('page_size', 10))
-        if size > 10 and size < 1:
-            size = 10
-        page = int(request.args.get('page', 1))
-        if page < 1:
-            page = 1
-        # get deposit
-        ds = Deposit.get_deposits(size=size, page=page, order_by=order_by,
-            order=order)
-        return Deposit.to_deposits_json(ds), 200
+        try:
+            # ordering
+            order_by = request.args.get('order_by', 'created_at')
+            order = request.args.get('order', 'desc')
+            # pagination
+            size = int(request.args.get('page_size', 10))
+            if size > 10 and size < 1:
+                size = 10
+            page = int(request.args.get('page', 1))
+            if page < 1:
+                page = 1
+            # get deposit
+            ds = Deposit.get_deposits(size=size, page=page, order_by=order_by,
+                order=order)
+            return Deposit.to_deposits_json(ds), 200
+        except:
+            return Helper.abort(500, "Internal Server Error", base="Internal Server Error")
+
+    @app.endpoint('deposit#deposit')
+    @default_headers
+    def deposit(methods=["GET"]):
+        uuid = request.args.get('uuid', None)
+        print uuid
+        if uuid == None:
+            return Helper.abort(400, "Bad Request", base="Unknown Deposit request")
+        try:
+            deposit = Deposit.find_deposit(uuid=uuid)
+            if deposit == None:
+                return Helper.abort(404, "Not Found", base="Deposit not found")
+            return deposit.to_json(), 200
+        except:
+            return Helper.abort(500, "Internal Server Error", base="Internal Server Error")
+
+
+
 
 
 # routes
 # app.url_map.add(Rule('/users.json', endpoint="user#index"))
 app.url_map.add(Rule('/user/authenticate.json', endpoint="user#authenticate"))
-
 app.url_map.add(Rule('/deposit/index.json', endpoint="deposit#index"))
+app.url_map.add(Rule('/deposit/deposit.json', endpoint="deposit#deposit"))
 
 
 
