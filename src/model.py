@@ -1,4 +1,8 @@
-import sha, json, time
+import sha, json, time, uuid, operator
+
+# placeholders
+deposits = []
+users = []
 
 class User(object):
 
@@ -30,8 +34,7 @@ class User(object):
 
     @classmethod
     def find_user(cls, email, password):
-        us = Users.users().get_users()
-        for u in us:
+        for u in users:
             if u.equals(email=email, password=password):
                 return u
         return None
@@ -40,19 +43,52 @@ class User(object):
         ep = sha.new(email + ":" + password).hexdigest()
         return (email == self._email and ep == self._password)
 
-class Users(object):
-
     @classmethod
-    def users(cls):
-        return Users([ User.user_dennis(), User.user_walter() ])
+    def to_users_json(cls, us):
+        return json.dumps({'users': [u.to_json() for u in us]})
 
-    def __init__(self, users):
-        self._users = users
+class Deposit(object):
 
-    def get_users(self):
-        return self._users
+    def __init__(self, title, description):
+        self._uuid = str(uuid.uuid4())
+        self._title = title
+        self._description = description
+        self._created_at = str(time.time())
 
     def to_json(self):
-        users = [ x.to_json() for x in self.get_users()]
-        return json.dumps({'users': users})
+        return json.dumps({'deposit': {
+            'uuid': self._uuid,
+            'title': self._title,
+            'description': self._description,
+            'authors': [],
+            'domain': "",
+            'created_at': self._created_at,
+            'modified_at': str(time.time()),
+            'pid': '',
+            'files': [],
+            'license': ''
+        }})
+    def get_created_at(self):
+        return self._created_at
 
+    @classmethod
+    def to_deposits_json(cls, ds):
+        return json.dumps({'deposits': [d.to_json() for d in ds]})
+
+    @classmethod
+    def get_deposits(cls, page, size, order_by, order):
+        start = (page - 1) * size
+        end = start + size
+        # sort
+        reverse = order == 'asc'
+        ds = sorted(deposits, key=lambda d: d.get_created_at(), reverse=reverse)
+
+        return ds[start:end]
+
+# user, deposit test values
+users = [ User.user_dennis(), User.user_walter() ]
+for i in range(1000):
+    d = Deposit(title="Deposit "+str(i),
+        description="Description of deposit " + str(i))
+    deposits.append(d)
+    time.sleep(.001)

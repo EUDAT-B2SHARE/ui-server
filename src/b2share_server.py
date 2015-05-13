@@ -5,7 +5,7 @@ from flask import Response, g, redirect, url_for, make_response
 from werkzeug.routing import Rule
 from functools import wraps
 
-from model import User, Users
+from model import User, Deposit
 import json
 
 
@@ -40,8 +40,8 @@ def default_headers(f):
 
 class Helper(object):
     @classmethod
-    def abort(cls, code, error_msg):
-        jj = jsonify({'error': code, "message": error_msg})
+    def abort(cls, code, error_msg, base, ):
+        jj = jsonify({'error': {"message": error_msg, "base": base }})
         return jj, code
 
 # server payload
@@ -51,11 +51,13 @@ class B2shareServer(object):
         # debug = reloading on codechange
         app.run(debug = True)
 
-    @app.endpoint('user#index')
-    @default_headers
-    def user_index():
-        json = jsonify(Factory.users())
-        return json, 200
+    # USER
+
+    # @app.endpoint('user#index')
+    # @default_headers
+    # def user_index():
+    #     json = jsonify(Factory.users())
+    #     return json, 200
 
     @app.endpoint('user#authenticate')
     @default_headers
@@ -66,14 +68,37 @@ class B2shareServer(object):
             jdata = json.loads(request.data)
             user = User.find_user(email=jdata['email'], password=jdata['password'])
             if user == None:
-                return Helper.abort(401, "Unauthorized")
+                return Helper.abort(401, "Unauthorized", base="Invalid credentials")
             return user.to_json(), 200
         except KeyError:
-            return Helper.abort(400, "Bad Request")
+            return Helper.abort(400, "Bad Request", base="Invalid credentials")
+
+    # DEPOSIT
+
+    @app.endpoint('deposit#index')
+    @default_headers
+    def deposit_index(methods=["GET", "OPTIONS"]):
+        # ordering
+        order_by = request.args.get('order_by', 'created_at')
+        order = request.args.get('order', 'desc')
+        # pagination
+        size = int(request.args.get('page_size', 10))
+        if size > 10 and size < 1:
+            size = 10
+        page = int(request.args.get('page', 1))
+        if page < 1:
+            page = 1
+        # get deposit
+        ds = Deposit.get_deposits(size=size, page=page, order_by=order_by,
+            order=order)
+        return Deposit.to_deposits_json(ds), 200
+
 
 # routes
-app.url_map.add(Rule('/users.json', endpoint="user#index"))
+# app.url_map.add(Rule('/users.json', endpoint="user#index"))
 app.url_map.add(Rule('/user/authenticate.json', endpoint="user#authenticate"))
+
+app.url_map.add(Rule('/deposits.json', endpoint="deposit#index"))
 
 
 
