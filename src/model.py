@@ -20,14 +20,25 @@ class User(object):
         self._name = name
         self._email = email
         self._password = sha.new(email + ":" + password).hexdigest()
+        self.new_token()
 
-    def to_json(self):
+    def gen_token(self):
         time_ms = str(int(round(time.time() *1000)))
-        return json.dumps({'user': {
+        return str(sha.new(self._email + ":" + time_ms).hexdigest())
+
+    def new_token(self):
+        self._token = self.gen_token()
+        return self._token
+
+    def to_dict(self):
+        return {'user': {
             'name': self._name,
             'email': self._email,
-            'token': str(sha.new(self._email + ":" + time_ms).hexdigest())
-        }})
+            'token': self._token
+        }}
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
 
     def get_email(self):
         return self._email
@@ -55,8 +66,8 @@ class Deposit(object):
         self._description = description
         self._created_at = str(time.time())
 
-    def to_json(self):
-        return json.dumps({'deposit': {
+    def to_dict(self):
+        return {'deposit': {
             'uuid': self._uuid,
             'title': self._title,
             'description': self._description,
@@ -67,13 +78,17 @@ class Deposit(object):
             'pid': '',
             'files': [],
             'license': ''
-        }})
+        }}
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
     def get_created_at(self):
         return self._created_at
 
     @classmethod
     def to_deposits_json(cls, ds):
-        return json.dumps({'deposits': [d.to_json() for d in ds]})
+        return json.dumps({'deposits': [d.to_dict() for d in ds]})
 
     @classmethod
     def get_deposits(cls, page, size, order_by, order):

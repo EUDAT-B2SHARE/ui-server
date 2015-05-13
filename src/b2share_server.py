@@ -69,6 +69,7 @@ class B2shareServer(object):
             user = User.find_user(email=jdata['email'], password=jdata['password'])
             if user == None:
                 return Helper.abort(401, "Unauthorized", base="Invalid credentials")
+            user.new_token()
             return user.to_json(), 200
         except KeyError:
             return Helper.abort(400, "Bad Request", base="Invalid credentials")
@@ -98,7 +99,7 @@ class B2shareServer(object):
 # app.url_map.add(Rule('/users.json', endpoint="user#index"))
 app.url_map.add(Rule('/user/authenticate.json', endpoint="user#authenticate"))
 
-app.url_map.add(Rule('/deposits.json', endpoint="deposit#index"))
+app.url_map.add(Rule('/deposit/index.json', endpoint="deposit#index"))
 
 
 
