@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
 import sha, json, time, uuid, operator
+
+
 
 # placeholders
 deposits = []
@@ -15,6 +18,16 @@ class User(object):
     def user_walter(cls):
         return User(name="Walter de Jong",
             email="walter.dejong@surfsara.nl", password="walter123")
+
+    @classmethod
+    def user_emanuel(cls):
+        return User(name="Emanuel Dima",
+            email="emanuel.dima@uni-tuebingen.de", password="eman$123")
+
+    @classmethod
+    def user_carl(cls):
+        return User(name="Carl Johan Håkansson",
+            email="cjhak@kth.se", password="carl$123")
 
     def __init__(self, name, email, password):
         self._name = name
