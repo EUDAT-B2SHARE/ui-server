@@ -5,6 +5,10 @@ B2share dummy server in Python with Flask.
 
 ### Development
 
+Eighter run through Apache (ProxyPass) or as standalone.
+
+NOTE: `Access-Control-Allow-Origin` must be set if alternate ports/ hosts are used!
+
 **Prerequisites**
 
 * Python 2.7
@@ -25,7 +29,7 @@ python setup.py develop
 python scripts/b2share-serve
 ```
 
-**Apache ProxyBypass**
+**Apache ProxyPass**
 
 ```
 <VirtualHost *:80>
