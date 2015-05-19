@@ -49,7 +49,7 @@ class B2shareServer(object):
     @classmethod
     def serve(cls):
         # debug = reloading on codechange
-        app.run(debug = True)
+        app.run(debug = True, host='0.0.0.0')
 
     # USER
 
@@ -112,8 +112,10 @@ class B2shareServer(object):
         except:
             return Helper.abort(500, "Internal Server Error", base="Internal Server Error")
 
-
-
+    @app.route("/")
+    @default_headers
+    def index():
+        return "b2share"
 
 
 # routes

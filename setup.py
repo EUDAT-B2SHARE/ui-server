@@ -21,6 +21,6 @@ setup(
   long_description = read('README.md'),
   scripts = ["scripts/b2share-serve"],
   install_requires=[
-    'Flask-Script', 'Flask-Jsonpify'
+    'Flask', 'Flask-Script', 'Flask-Jsonpify'
   ],
 )
