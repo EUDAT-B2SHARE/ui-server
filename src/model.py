@@ -15,11 +15,6 @@ class User(object):
             email="dennis.blommesteijn@surfsara.nl", password="dennis123")
 
     @classmethod
-    def user_walter(cls):
-        return User(name="Walter de Jong",
-            email="walter.dejong@surfsara.nl", password="walter123")
-
-    @classmethod
     def user_emanuel(cls):
         return User(name="Emanuel Dima",
             email="emanuel.dima@uni-tuebingen.de", password="eman$123")
@@ -28,6 +23,16 @@ class User(object):
     def user_carl(cls):
         return User(name="Carl Johan Håkansson",
             email="cjhak@kth.se", password="carl$123")
+
+    @classmethod
+    def user_lassi(cls):
+        return User(name="Lassi Lehtinen",
+            email="lassi.lehtinen@csc.fi", password="lassi$123")
+
+    @classmethod
+    def user_sarah(cls):
+        return User(name="Sarah Berenji",
+            email="sarahba@pdc.kth.se", password="lassi$123")
 
     def __init__(self, name, email, password):
         self._name = name
@@ -123,7 +128,8 @@ class Deposit(object):
         return None
 
 # user, deposit test values
-users = [ User.user_dennis(), User.user_walter() ]
+users = [ User.user_dennis(), User.user_emanuel(), User.user_sarah(),
+    User.user_lassi(), User.user_carl() ]
 for i in range(1000):
     d = Deposit(title="Deposit "+str(i),
         description="Description of deposit " + str(i))
