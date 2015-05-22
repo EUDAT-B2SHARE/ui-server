@@ -82,6 +82,10 @@ class B2shareServer(object):
     @default_headers
     def deposit_index(methods=["GET", "OPTIONS"]):
         try:
+            token = request.args.get('token', None)
+            user = User.find_user(token=token)
+            if token != None and user == None:
+                return Helper.abort(401, "Unauthorized", base="Invalid credentials")
             # ordering
             order_by = request.args.get('order_by', 'created_at')
             order = request.args.get('order', 'desc')
@@ -94,7 +98,7 @@ class B2shareServer(object):
                 page = 1
             # get deposit
             ds = Deposit.get_deposits(size=size, page=page, order_by=order_by,
-                order=order)
+                order=order, user=user)
             return Deposit.to_deposits_json(ds), 200
         except:
             return Helper.abort(500, "Internal Server Error", base="Internal Server Error")
@@ -102,12 +106,16 @@ class B2shareServer(object):
     @app.endpoint('deposit#deposit')
     @default_headers
     def deposit(methods=["GET"]):
+        token = request.args.get('token', None)
+        user = User.find_user(token=token)
+        if token != None and user == None:
+            return Helper.abort(401, "Unauthorized", base="Invalid credentials")
+        # TODO: check authentication
         uuid = request.args.get('uuid', None)
-        print uuid
         if uuid == None:
             return Helper.abort(400, "Bad Request", base="Unknown Deposit request")
         try:
-            deposit = Deposit.find_deposit(uuid=uuid)
+            deposit = Deposit.find_deposit(uuid=uuid, user=user)
             if deposit == None:
                 return Helper.abort(404, "Not Found", base="Deposit not found")
             return deposit.to_json(), 200
@@ -117,7 +125,7 @@ class B2shareServer(object):
     @app.route("/")
     @default_headers
     def index():
-        return "b2share"
+        return Helper.abort(404, "Not Found", base="Not found")
 
 
 # routes

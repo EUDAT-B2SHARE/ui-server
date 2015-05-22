@@ -54,6 +54,8 @@ class User(object):
             'email': self._email,
             'token': self._token
         }}
+    def get_email(self):
+        return self_email
 
     def to_json(self):
         return json.dumps(self.to_dict())
@@ -61,19 +63,35 @@ class User(object):
     def get_email(self):
         return self._email
 
+    def get_token(self):
+        return self._token
+
     @classmethod
-    def find_user(cls, email, password):
+    def find_user(cls, email=None, password=None, token=None):
         for u in users:
-            if u.equals(email=email, password=password):
-                return u
+            if email and password:
+                if u.verify_email_password(email=email, password=password):
+                    return u
+            elif token:
+                if u.verify_token(token=token):
+                    return u
         return None
 
-    def equals(self, email, password):
+    def verify_email_password(self, email, password):
         ep = sha.new(email + ":" + password).hexdigest()
         return (email == self._email and ep == self._password)
 
+    def verify_token(self, token):
+        # verify token and generate new one
+        if self._token == token:
+            # self.new_token()
+            return True
+        # invalid token
+        else:
+            return False
+
     @classmethod
-    def to_users_json(cls, us):
+    def to_users_json(cls, us, user=None):
         return json.dumps({'users': [u.to_json() for u in us]})
 
 class Deposit(object):
@@ -98,7 +116,7 @@ class Deposit(object):
             'license': ''
         }}
 
-    def to_json(self):
+    def to_json(self, user=None):
         return json.dumps(self.to_dict())
 
     def get_created_at(self):
@@ -108,11 +126,11 @@ class Deposit(object):
         return self._uuid
 
     @classmethod
-    def to_deposits_json(cls, ds):
+    def to_deposits_json(cls, ds, user=None):
         return json.dumps({'deposits': [d.to_dict() for d in ds]})
 
     @classmethod
-    def get_deposits(cls, page, size, order_by, order):
+    def get_deposits(cls, page, size, order_by, order, user=None):
         start = (page - 1) * size
         end = start + size
         # sort
@@ -121,7 +139,7 @@ class Deposit(object):
         return ds[start:end]
 
     @classmethod
-    def find_deposit(cls, uuid):
+    def find_deposit(cls, uuid, user=None):
         for d in deposits:
             if d.get_uuid() == uuid:
                 return d
