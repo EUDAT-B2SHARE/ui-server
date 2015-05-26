@@ -16,7 +16,7 @@ app = Flask(__name__)
 # default headers
 headers = {'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': 'http://localhost:8000',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Server': 'EUDAT-B2SHARE/UI-API-1.1.1'}
 
 # helpers for response headers
@@ -81,32 +81,43 @@ class B2shareServer(object):
     @app.endpoint('deposit#index')
     @default_headers
     def deposit_index(methods=["GET", "OPTIONS"]):
-        try:
-            token = request.args.get('token', None)
-            user = User.find_user(token=token)
-            if token != None and user == None:
-                return Helper.abort(401, "Unauthorized", base="Invalid credentials")
-            # ordering
-            order_by = request.args.get('order_by', 'created_at')
-            order = request.args.get('order', 'desc')
-            # pagination
-            size = int(request.args.get('page_size', 10))
-            if size > 10 and size < 1:
-                size = 10
-            page = int(request.args.get('page', 1))
-            if page < 1:
-                page = 1
-            # get deposit
-            ds = Deposit.get_deposits(size=size, page=page, order_by=order_by,
-                order=order, user=user)
-            return Deposit.to_deposits_json(ds), 200
-        except:
-            return Helper.abort(500, "Internal Server Error", base="Internal Server Error")
+        # try:
+        auth = request.headers.get('Authorization', None)
+        prefix = "B2SHARE"
+        token = None
+        if auth != None and auth[0:len(prefix)] == prefix:
+            token = auth[len(prefix)+1:]
+        print "deposit_index token: " + str(token) + "" + str(auth)
+        user = User.find_user(token=token)
+        print "user: " + str(user)
+        if token != None and user == None:
+            return Helper.abort(401, "Unauthorized", base="Invalid credentials")
+        # ordering
+        order_by = request.args.get('order_by', 'created_at')
+        order = request.args.get('order', 'desc')
+        # pagination
+        size = int(request.args.get('page_size', 10))
+        if size > 10 and size < 1:
+            size = 10
+        page = int(request.args.get('page', 1))
+        if page < 1:
+            page = 1
+        # get deposit
+        ds = Deposit.get_deposits(size=size, page=page, order_by=order_by,
+            order=order, user=user)
+        return Deposit.to_deposits_json(ds), 200
+        # except:
+        #     return Helper.abort(500, "Internal Server Error", base="Internal Server Error")
 
     @app.endpoint('deposit#deposit')
     @default_headers
     def deposit(methods=["GET"]):
-        token = request.args.get('token', None)
+        # token = request.args.get('token', None)
+        auth = request.headers.get('Authorization', None)
+        prefix = "B2SHARE"
+        token = None
+        if auth != None and auth[0:len(prefix)] == prefix:
+            token = auth[len(prefix)+1:]
         user = User.find_user(token=token)
         if token != None and user == None:
             return Helper.abort(401, "Unauthorized", base="Invalid credentials")
