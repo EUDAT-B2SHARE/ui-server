@@ -40,11 +40,26 @@ def default_headers(f):
     return decorated_function
 
 
+
 class Helper(object):
     @classmethod
     def abort(cls, code, error_msg, base):
         jj = jsonify({'error': {"message": error_msg, "base": base }})
         return jj, code
+
+    @classmethod
+    def user_authentication(cls):
+        # get auth header
+        auth = request.headers.get('Authorization', None)
+        prefix = "B2SHARE"
+        token = None
+        # strip prefix
+        if auth and auth[0:len(prefix)] == prefix:
+            token = auth[len(prefix)+1:]
+        # load user that matches token
+        user = User.find_user(token=token)
+        # return token, user tuple
+        return (token, user)
 
 # server payload
 class B2shareServer(object):
@@ -71,7 +86,6 @@ class B2shareServer(object):
             user = User.find_user(email=jdata['email'], password=jdata['password'])
             if user == None:
                 return Helper.abort(401, "Unauthorized", base="Invalid credentials")
-            user.new_token()
             return user.to_json(), 200
         except KeyError:
             return Helper.abort(400, "Bad Request", base="Invalid credentials")
@@ -81,55 +95,54 @@ class B2shareServer(object):
     @app.endpoint('deposit#index')
     @default_headers
     def deposit_index(methods=["GET", "OPTIONS"]):
-        # try:
-        auth = request.headers.get('Authorization', None)
-        prefix = "B2SHARE"
-        token = None
-        if auth != None and auth[0:len(prefix)] == prefix:
-            token = auth[len(prefix)+1:]
-        print "deposit_index token: " + str(token) + "" + str(auth)
-        user = User.find_user(token=token)
-        print "user: " + str(user)
-        if token != None and user == None:
-            return Helper.abort(401, "Unauthorized", base="Invalid credentials")
-        # ordering
-        order_by = request.args.get('order_by', 'created_at')
-        order = request.args.get('order', 'desc')
-        # pagination
-        size = int(request.args.get('page_size', 10))
-        if size > 10 and size < 1:
-            size = 10
-        page = int(request.args.get('page', 1))
-        if page < 1:
-            page = 1
-        # get deposit
-        ds = Deposit.get_deposits(size=size, page=page, order_by=order_by,
-            order=order, user=user)
-        return Deposit.to_deposits_json(ds), 200
-        # except:
-        #     return Helper.abort(500, "Internal Server Error", base="Internal Server Error")
+        if request.method == "OPTIONS":
+            return jsonify({}), 200
+        try:
+            # authentication
+            token, user = Helper.user_authentication()
+            if token and user == None:
+                return Helper.abort(401, "Unauthorized", base="Invalid credentials")
+            # ordering
+            order_by = request.args.get('order_by', 'created_at')
+            order = request.args.get('order', 'desc')
+            # pagination
+            size = int(request.args.get('page_size', 10))
+            if size > 10 and size < 1:
+                size = 10
+            page = int(request.args.get('page', 1))
+            if page < 1:
+                page = 1
+            # get deposit
+            ds = Deposit.get_deposits(size=size, page=page, order_by=order_by,
+                order=order, user=user)
+            return Deposit.to_deposits_json(ds), 200
+        except:
+            return Helper.abort(500, "Internal Server Error", base="Internal Server Error")
 
     @app.endpoint('deposit#deposit')
     @default_headers
-    def deposit(methods=["GET"]):
-        # token = request.args.get('token', None)
-        auth = request.headers.get('Authorization', None)
-        prefix = "B2SHARE"
-        token = None
-        if auth != None and auth[0:len(prefix)] == prefix:
-            token = auth[len(prefix)+1:]
-        user = User.find_user(token=token)
-        if token != None and user == None:
-            return Helper.abort(401, "Unauthorized", base="Invalid credentials")
-        # TODO: check authentication
-        uuid = request.args.get('uuid', None)
-        if uuid == None:
-            return Helper.abort(400, "Bad Request", base="Unknown Deposit request")
+    def deposit(methods=["GET", "OPTIONS"]):
+        if request.method == "OPTIONS":
+            return jsonify({}), 200
         try:
+            # authentication
+            token, user = Helper.user_authentication()
+            if token and user == None:
+                return Helper.abort(401, "Unauthorized", base="Invalid credentials")
+
+            # request
+            uuid = request.args.get('uuid', None)
+            if uuid == None:
+                return Helper.abort(400, "Bad Request", base="Unknown Deposit request")
+
             deposit = Deposit.find_deposit(uuid=uuid, user=user)
             if deposit == None:
                 return Helper.abort(404, "Not Found", base="Deposit not found")
-            return deposit.to_json(), 200
+            resp = Response(deposit.to_json())
+            resp.code = 200
+            if user:
+                resp.headers['Token'] = "B2SHARE " + user.get_token()
+            return resp
         except:
             return Helper.abort(500, "Internal Server Error", base="Internal Server Error")
 

@@ -84,7 +84,7 @@ class User(object):
     def verify_token(self, token):
         # verify token and generate new one
         if self._token == token:
-            # self.new_token()
+            self.new_token()
             return True
         # invalid token
         else:
