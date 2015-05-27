@@ -17,6 +17,7 @@ app = Flask(__name__)
 headers = {'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': 'http://localhost:8000',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Expose-Headers': 'X-Token',
     'Server': 'EUDAT-B2SHARE/UI-API-1.1.1'}
 
 # helpers for response headers
@@ -86,7 +87,11 @@ class B2shareServer(object):
             user = User.find_user(email=jdata['email'], password=jdata['password'])
             if user == None:
                 return Helper.abort(401, "Unauthorized", base="Invalid credentials")
-            return user.to_json(), 200
+            # return user.to_json(), 200
+            resp = Response(user.to_json())
+            resp.code = 200
+            resp.headers['X-Token'] = "B2SHARE " + user.get_token()
+            return resp
         except KeyError:
             return Helper.abort(400, "Bad Request", base="Invalid credentials")
 
@@ -115,7 +120,11 @@ class B2shareServer(object):
             # get deposit
             ds = Deposit.get_deposits(size=size, page=page, order_by=order_by,
                 order=order, user=user)
-            return Deposit.to_deposits_json(ds), 200
+            resp = Response(Deposit.to_deposits_json(ds))
+            resp.code = 200
+            if user:
+                resp.headers['X-Token'] = "B2SHARE " + user.get_token()
+            return resp
         except:
             return Helper.abort(500, "Internal Server Error", base="Internal Server Error")
 
@@ -141,7 +150,7 @@ class B2shareServer(object):
             resp = Response(deposit.to_json())
             resp.code = 200
             if user:
-                resp.headers['Token'] = "B2SHARE " + user.get_token()
+                resp.headers['X-Token'] = "B2SHARE " + user.get_token()
             return resp
         except:
             return Helper.abort(500, "Internal Server Error", base="Internal Server Error")
