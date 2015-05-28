@@ -52,8 +52,9 @@ class User(object):
         return {'user': {
             'name': self._name,
             'email': self._email,
-            'token': self._token
-        }}
+            'token': self._token},
+        'info':{}}
+
     def get_email(self):
         return self_email
 
@@ -113,7 +114,8 @@ class Deposit(object):
             'modified_at': str(int(time.time()*1000)),
             'pid': '',
             'files': [],
-            'license': ''
+            'license': ''},
+        'info':{
         }}
 
     def to_json(self, user=None):
@@ -126,8 +128,13 @@ class Deposit(object):
         return self._uuid
 
     @classmethod
+    def count(cls):
+        return len(deposits)
+
+    @classmethod
     def to_deposits_json(cls, ds, user=None):
-        return json.dumps({'deposits': [d.to_dict() for d in ds]})
+        return json.dumps({'deposits': [d.to_dict() for d in ds],
+            'info': {'count': Deposit.count()}})
 
     @classmethod
     def get_deposits(cls, page, size, order_by, order, user=None):
