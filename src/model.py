@@ -32,7 +32,7 @@ class User(object):
     @classmethod
     def user_sarah(cls):
         return User(name="Sarah Berenji",
-            email="sarahba@pdc.kth.se", password="lassi$123")
+            email="sarahba@pdc.kth.se", password="sarah$123")
 
     def __init__(self, name, email, password):
         self._name = name

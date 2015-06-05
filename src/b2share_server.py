@@ -16,7 +16,7 @@ app = Flask(__name__)
 # default headers
 headers = {'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': 'http://localhost:8000',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Access-Control-Expose-Headers',
     'Access-Control-Expose-Headers': 'X-Token',
     'Server': 'EUDAT-B2SHARE/UI-API-1.1.1'}
 
