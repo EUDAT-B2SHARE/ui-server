@@ -18,6 +18,8 @@ NOTE: `Access-Control-Allow-Origin` must be set if alternate ports/ hosts are us
 **Install**
 
 ```bash
+git clone git@github.com:EUDAT-B2SHARE/ui-server.git
+cd ui-server/
 virtualenv .dev
 . .dev/bin/activate
 python setup.py develop
